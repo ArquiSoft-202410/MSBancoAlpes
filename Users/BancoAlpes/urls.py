@@ -19,5 +19,5 @@ from Users.views import test
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('test/', test),
+    path('users/', test),
 ]

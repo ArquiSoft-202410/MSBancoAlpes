@@ -1,0 +1,29 @@
+_format_version: "2.1"
+
+services:
+  - host: home_upstream
+    name: home_service
+    protocol: http
+    routes:
+      - name: home
+        paths:
+          - /
+        strip_path: false
+  - host: users_upstream
+    name: users_service
+    protocol: http
+    routes:
+      - name: users
+        paths:
+          - /users
+        strip_path: false
+
+upstreams:
+  - name: home_upstream
+    targets:
+      - target: 10.128.0.55:8080
+        weight: 100
+  - name: users_upstream
+    targets:
+      - target: 10.128.0.56:8080
+        weight: 100
