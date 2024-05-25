@@ -1,0 +1,136 @@
+resources:
+# Firewall rule
+- name: services-apps
+  type: compute.v1.firewall
+  properties:
+    network: https://www.googleapis.com/compute/v1/projects/arquisoft-202410/global/networks/default
+    priority: 1000
+    direction: INGRESS
+    sourceTags:
+    - api-gateway
+    targetTags:
+    - services-firewall
+    allowed:
+    - IPProtocol: TCP
+      ports:
+      - 8080
+
+# Firewall rule
+- name: api-gateway
+  type: compute.v1.firewall
+  properties:
+    network: https://www.googleapis.com/compute/v1/projects/arquisoft-202410/global/networks/default
+    priority: 1000
+    direction: INGRESS
+    sourceRanges:
+    - 0.0.0.0/0
+    targetTags:
+    - api-gateway
+    allowed:
+    - IPProtocol: TCP
+      ports:
+      - 8000
+  
+# Firewall rule
+- name: db-firewall
+  type: compute.v1.firewall
+  properties:
+    network: https://www.googleapis.com/compute/v1/projects/arquisoft-202410/global/networks/default
+    priority: 1000
+    direction: INGRESS
+    sourceTags:
+    - services-firewall
+    targetTags:
+    - db-firewall
+    allowed:
+    - IPProtocol: TCP
+      ports:
+      - 5432
+
+# Instance
+- type: compute.v1.instance
+  name: home
+  properties:
+    zone: us-central1-a
+    machineType: https://www.googleapis.com/compute/v1/projects/arquisoft-202410/zones/us-central1-a/machineTypes/e2-micro
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        sourceImage: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20240307b
+    networkInterfaces:
+    - network: https://www.googleapis.com/compute/v1/projects/arquisoft-202410/global/networks/default
+      networkIP: 10.128.0.55
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    tags:
+      items: 
+      - services-firewall
+    metadata:
+      items:
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          sudo apt-get update
+          sudo apt install python3-pip -y
+          
+          if [ ! -d "/apps" ]; then
+            sudo mkdir /apps
+            cd /apps
+            sudo git clone https://github.com/ArquiSoft-202410/BancoAlpes.git
+            cd BancoAlpes
+          else
+            cd /apps/BancoAlpes
+            sudo git pull
+          fi
+
+          sudo pip3 install -r Deployment/requirements.txt
+          sudo python3 manage.py makemigrations
+          sudo python3 manage.py migrate
+
+# Instance
+- type: compute.v1.instance
+  name: users
+  properties:
+    zone: us-central1-a
+    machineType: https://www.googleapis.com/compute/v1/projects/arquisoft-202410/zones/us-central1-a/machineTypes/e2-micro
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        sourceImage: https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-2004-focal-v20240307b
+    networkInterfaces:
+    - network: https://www.googleapis.com/compute/v1/projects/arquisoft-202410/global/networks/default
+      networkIP: 10.128.0.56
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    tags:
+      items: 
+      - services-firewall
+    metadata:
+      items:
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          sudo apt-get update
+          sudo apt install python3-pip -y
+          
+          if [ ! -d "/apps" ]; then
+            sudo mkdir /apps
+            cd /apps
+            sudo git clone https://github.com/ArquiSoft-202410/BancoAlpes.git
+            cd BancoAlpes
+          else
+            cd /apps/BancoAlpes
+            sudo git pull
+          fi
+
+          sudo pip3 install -r Deployment/requirements.txt
+          sudo python3 manage.py makemigrations
+          sudo python3 manage.py migrate
